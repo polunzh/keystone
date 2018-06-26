@@ -8,6 +8,7 @@ module.exports = function SigninRoute (req, res) {
 	var UserList = keystone.list(keystone.get('user model'));
 	var locals = {
 		adminPath: '/' + keystone.get('admin path'),
+		resourceURI: keystone.get('resource uri'),
 		brand: keystone.get('brand'),
 		csrf: { header: {} },
 		logo: keystone.get('signin logo'),

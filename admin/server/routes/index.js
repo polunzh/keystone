@@ -62,6 +62,7 @@ module.exports = function IndexRoute (req, res) {
 
 	var locals = {
 		adminPath: keystoneData.adminPath,
+		resourceURI: keystone.get('resource uri'),
 		cloudinaryScript: false,
 		codemirrorPath: codemirrorPath,
 		env: keystone.get('env'),

@@ -5,7 +5,7 @@
     <meta name="viewport" content="initial-scale=1.0,user-scalable=no,maximum-scale=1,width=device-width">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <title>Sign in to <%= brand %></title>
-    <link rel="stylesheet" href="<%= adminPath %>/styles/keystone.min.css">
+    <link rel="stylesheet" href="<%= resourceURI %>/styles/keystone.min.css">
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
   </head>
   <body>
@@ -13,7 +13,7 @@
     <script>
       var Keystone = <%- JSON.stringify(locals) %>;
     </script>
-    <script src="<%= adminPath %>/js/packages.js"></script>
+    <script src="<%= resourceURI %>/js/packages.js"></script>
     <script src="<%= adminPath %>/js/signin.js"></script>
   </body>
 </html>
