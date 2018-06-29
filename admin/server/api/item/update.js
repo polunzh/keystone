@@ -13,7 +13,7 @@ module.exports = function (req, res) {
 		req.list.updateItem(item, req.body, { files: req.files, user: req.user }, function (err) {
 			if (err) {
 				var status = err.error === 'validation errors' ? 400 : 500;
-				var error = err.error === 'database error' ? err.detail : err;
+				var error = err.error === 'database error' || err.detail ? err.detail : err;
 				return res.apiError(status, err.error, error);
 			}
 			// Reload the item from the database to prevent save hooks or other
