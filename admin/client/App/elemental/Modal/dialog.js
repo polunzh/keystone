@@ -125,6 +125,8 @@ const classes = StyleSheet.create({
 	dialog: {
 		backgroundColor: 'white',
 		borderRadius: theme.borderRadius.default,
+		maxHeight: '90%',
++		overflowY: 'auto',
 		paddingBottom: theme.modal.padding.dialog.vertical,
 		paddingLeft: theme.modal.padding.dialog.horizontal,
 		paddingRight: theme.modal.padding.dialog.horizontal,
