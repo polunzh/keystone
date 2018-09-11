@@ -1,6 +1,6 @@
 var bodyParser = require('body-parser');
 var express = require('express');
-var multer = require('multer');
+var uploads = require('../../../lib/uploads');
 
 module.exports = function createDynamicRouter (keystone) {
 
@@ -18,7 +18,7 @@ module.exports = function createDynamicRouter (keystone) {
 	// Use bodyParser and multer to parse request bodies and file uploads
 	router.use(bodyParser.json({}));
 	router.use(bodyParser.urlencoded({ extended: true }));
-	router.use(multer({ includeEmptyFields: true }));
+	uploads.configure(router);
 
 	// hookin custome admin api middlewares
 	let middlewares = keystone.get('admin api middlewares');
