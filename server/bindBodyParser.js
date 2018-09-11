@@ -1,4 +1,4 @@
-var multer = require('multer');
+var uploads = require('../lib/uploads');
 var bodyParser = require('body-parser');
 
 module.exports = function bindIPRestrictions (keystone, app) {
@@ -10,7 +10,7 @@ module.exports = function bindIPRestrictions (keystone, app) {
 	app.use(bodyParser.json(bodyParserParams));
 	bodyParserParams.extended = true;
 	app.use(bodyParser.urlencoded(bodyParserParams));
-	app.use(multer({
-		includeEmptyFields: true,
-	}));
+	if (keystone.get('handle uploads')) {
+		uploads.configure(app, keystone.get('multer options'));
+	}
 };

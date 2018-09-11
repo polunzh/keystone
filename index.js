@@ -37,6 +37,7 @@ var Keystone = function () {
 		'model prefix': null,
 		'module root': moduleRoot,
 		'frame guard': 'sameorigin',
+		'handle uploads': true,
 	};
 	this._redirects = {};
 
