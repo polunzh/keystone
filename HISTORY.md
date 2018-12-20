@@ -2,6 +2,10 @@
 
 KeystoneJS is maintained by [@JedWatson](https://github.com/JedWatson) and an amazing team of contributors. All contributions are given credit here except for Jed's.
 
+## 2018-12-20
+
+* changed; switched to papaparse for CSV generation
+
 ## 2018-09-11
 
 * update `multer` package
