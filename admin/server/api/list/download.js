@@ -6,7 +6,7 @@ var moment = require('moment');
 var assign = require('object-assign');
 
 module.exports = function (req, res) {
-	var baby = require('babyparse');
+	var papaparse = require('papaparse');
 	var keystone = req.keystone;
 
 	var format = req.params.format.split('.')[1]; // json or csv
@@ -44,10 +44,7 @@ module.exports = function (req, res) {
 					fields: req.query.select,
 					user: req.user,
 				});
-				// If nested values in the first item aren't present, babyparse
-				// won't add them even if they are present in others. So we
-				// add keys from all items to an array and explicitly provided
-				// the complete set to baby.unparse() below
+
 				Object.keys(row).forEach(function (i) {
 					if (fields.indexOf(i) === -1) fields.push(i);
 				});
@@ -55,13 +52,16 @@ module.exports = function (req, res) {
 			});
 			res.attachment(req.list.path + '-' + moment().format('YYYYMMDD-HHMMSS') + '.csv');
 			res.setHeader('Content-Type', 'application/octet-stream');
-			var content = baby.unparse({
+			var content = papaparse.unparse({
 				data: data,
 				fields: fields,
 			}, {
 				delimiter: keystone.get('csv field delimiter') || ',',
 			});
-			res.end(content, 'utf-8');
+			// 解决用Excel打开乱码的问题
+			var BOM = Buffer.from('\uFEFF');
+			const bomCsv = Buffer.concat([BOM, Buffer.from(content)]);
+			res.end(bomCsv, 'utf-8');
 		} else {
 			data = results.map(function (item) {
 				return req.list.getData(item, req.query.select, req.query.expandRelationshipFields);
