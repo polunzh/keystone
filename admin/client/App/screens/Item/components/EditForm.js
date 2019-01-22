@@ -1,14 +1,7 @@
 import React from 'react';
 import moment from 'moment';
 import assign from 'object-assign';
-import {
-	Form,
-	FormField,
-	FormInput,
-	Grid,
-	Modal,
-	ResponsiveText,
-} from '../../../elemental';
+import { Form, FormField, FormInput, Grid, Modal, ResponsiveText } from '../../../elemental';
 
 // import { css, StyleSheet } from 'aphrodite/no-important';
 import { Fields } from 'FieldTypes';
@@ -101,43 +94,24 @@ var EditForm = React.createClass({
 	},
 
 	renderCustomFormFields (uiElements) {
-		return uiElements.map((fields, fieldsIndex) => fields.map((item, index) => {
-			const value = this.props.data.fields;
-			const props = {
-				mode: 'edit',
-				label: item.label,
-				value: item.value,
-				noedit: item.noedit,
-				onChange: event => {
-					uiElements[fieldsIndex][index].value = event.value;
-					this.setState({ customActionFormOptions: uiElements });
-				},
-			};
+		return uiElements.map((fields, fieldsIndex) =>
+			fields.map((item, index) => {
+				const props = {
+					ops: item.ops,
+					mode: 'edit',
+					label: item.label,
+					value: item.value,
+					defaultValue: item.defaultValue,
+					noedit: item.noedit,
+					onChange: event => {
+						uiElements[fieldsIndex][index].value = event.value;
+						this.setState({ formatedCustomActionFormOptions: uiElements });
+					},
+				};
 
-			if (item.isDynamic) {
-				if (item.option) {
-					props.value = value[item.option];
-				} else if (item.options) {
-					props.defaultValue = this.getValue(item.options, value);
-				}
-			}
-
-			if (item.type === 'select') {
-				const temp = this.getValue(item.options, value).map(ops => {
-					return {
-						label: ops[item.ops.label],
-						value: ops[item.ops.value],
-					};
-				});
-				if (temp.length) {
-					props.ops = temp;
-				} else {
-					item.type = 'text';
-				}
-			}
-
-			return React.createElement(Fields[item.type], props);
-		}));
+				return React.createElement(Fields[item.type], props);
+			})
+		);
 	},
 	hideCustomActionsModal () {
 		this.setState({
@@ -147,26 +121,24 @@ var EditForm = React.createClass({
 	},
 
 	isDone (customActionFormOptions) {
-		return customActionFormOptions.every(options => options.every(item => item.value || item.isDynamic));
+		return customActionFormOptions.every(options => options.every(item => item.value !== undefined || item.isDynamic));
 	},
 
 	renderCustomActionsModal () {
 		const { customActionFormOptions, loading, isShowCustomActionModal, alerts } = this.state;
+
 		return (
 			<Modal.Dialog
 				backdropClosesModal
 				onClose={this.hideCustomActionsModal.bind(this)}
-				isOpen={isShowCustomActionModal}
-			>
+				isOpen={isShowCustomActionModal}>
 				<h2 style={{ marginTop: '0.66em' }}>请填写相关信息</h2>
 				{alerts ? <AlertMessages alerts={this.state.alerts} /> : null}
 				<div style={{ height: '500px', overflow: 'auto' }}>
 					{this.renderCustomFormFields(customActionFormOptions)}
-					{customActionFormOptions.length > 1 && <div style={{ width: '100%', borderBottom: '1px solid #ddd' }}></div> }
+					{customActionFormOptions.length > 1 && <div style={{ width: '100%', borderBottom: '1px solid #ddd' }} />}
 				</div>
-				<div
-					style={{ display: 'flex', padding: '1em', justifyContent: 'space-around'}}
-				>
+				<div style={{ display: 'flex', padding: '1em', justifyContent: 'space-around' }}>
 					<LoadingButton
 						color="primary"
 						disabled={loading}
@@ -179,8 +151,7 @@ var EditForm = React.createClass({
 							this.setState({ loading: true });
 							this.callCustomAction(currentAction, this.props.data, customActionFormOptions);
 						}}
-						data-button="update"
-					>
+						data-button="update">
 						确定
 					</LoadingButton>
 					<Button disabled={loading} onClick={this.hideCustomActionsModal.bind(this)} color="cancel">
@@ -226,7 +197,6 @@ var EditForm = React.createClass({
 				values: value.fields,
 				loading: false,
 			});
-
 		});
 	},
 
@@ -250,7 +220,9 @@ var EditForm = React.createClass({
 
 		const handleXhr = (err, data) => {
 			if (err) {
-				const flag = confirm(`酒店确认失败 \n 失败原因: ${err} \n 是否需要强制确认, 点击确定进行强制确认（强制确认会忽略价格差价直接下定), 不需要强制确认让用户发起退款`);
+				const flag = confirm(
+					`酒店确认失败 \n 失败原因: ${err} \n 是否需要强制确认, 点击确定进行强制确认（强制确认会忽略价格差价直接下定), 不需要强制确认让用户发起退款`
+				);
 				if (flag) {
 					return this.props.list.callCustomAction(action, assign({ enforce: true }, this.props.data), handleXhr);
 				}
@@ -285,12 +257,42 @@ var EditForm = React.createClass({
 				return;
 			}
 		}
+
 		if (customAction.needForm) {
 			const optionsLength = customAction.formCount || this.getValue(customAction.formCountBy, value.fields).length || 1;
 			const customActionFormOptions = [];
 			for (let i = 0; i < optionsLength; i++) {
-				customActionFormOptions.push(JSON.parse(JSON.stringify(customAction.formKeys)));
+				const tmp = JSON.parse(JSON.stringify(customAction.formKeys));
+				tmp.map(item => {
+					const originValue = value.fields;
+					if (item.isDynamic) {
+						if (item.option) {
+							item.value = originValue[item.option];
+						} else if (item.options) {
+							item.defaultValue = this.getValue(item.options, originValue);
+						}
+					}
+
+					if (item.type === 'select') {
+						const temp = this.getValue(item.options, originValue).map(ops => {
+							return {
+								label: ops[item.ops.label],
+								value: ops[item.ops.value],
+							};
+						});
+						if (temp.length) {
+							item.ops = temp;
+						} else {
+							item.type = 'text';
+						}
+					}
+
+					return item;
+				});
+
+				customActionFormOptions.push(tmp);
 			}
+
 			return this.setState({
 				isShowCustomActionModal: true,
 				currentAction: customAction,
@@ -385,12 +387,30 @@ var EditForm = React.createClass({
 						modified="ID:"
 						normal={`${upcase(list.autokey.path)}: `}
 						title="Press <alt> to reveal the ID"
-						className="EditForm__key-or-id__label" />
+						className="EditForm__key-or-id__label"
+					/>
 					<AltText
-						modified={<input ref="keyOrIdInput" onFocus={this.handleKeyFocus} value={this.props.data.id} className="EditForm__key-or-id__input" readOnly />}
-						normal={<input ref="keyOrIdInput" onFocus={this.handleKeyFocus} value={this.props.data[list.autokey.path]} className="EditForm__key-or-id__input" readOnly />}
+						modified={
+							<input
+								ref="keyOrIdInput"
+								onFocus={this.handleKeyFocus}
+								value={this.props.data.id}
+								className="EditForm__key-or-id__input"
+								readOnly
+							/>
+						}
+						normal={
+							<input
+								ref="keyOrIdInput"
+								onFocus={this.handleKeyFocus}
+								value={this.props.data[list.autokey.path]}
+								className="EditForm__key-or-id__input"
+								readOnly
+							/>
+						}
 						title="Press <alt> to reveal the ID"
-						className="EditForm__key-or-id__field" />
+						className="EditForm__key-or-id__field"
+					/>
 				</div>
 			);
 		} else if (list.autokey && this.props.data[list.autokey.path]) {
@@ -398,7 +418,13 @@ var EditForm = React.createClass({
 				<div className={className}>
 					<span className="EditForm__key-or-id__label">{list.autokey.path}: </span>
 					<div className="EditForm__key-or-id__field">
-						<input ref="keyOrIdInput" onFocus={this.handleKeyFocus} value={this.props.data[list.autokey.path]} className="EditForm__key-or-id__input" readOnly />
+						<input
+							ref="keyOrIdInput"
+							onFocus={this.handleKeyFocus}
+							value={this.props.data[list.autokey.path]}
+							className="EditForm__key-or-id__input"
+							readOnly
+						/>
 					</div>
 				</div>
 			);
@@ -407,7 +433,13 @@ var EditForm = React.createClass({
 				<div className={className}>
 					<span className="EditForm__key-or-id__label">ID: </span>
 					<div className="EditForm__key-or-id__field">
-						<input ref="keyOrIdInput" onFocus={this.handleKeyFocus} value={this.props.data.id} className="EditForm__key-or-id__input" readOnly />
+						<input
+							ref="keyOrIdInput"
+							onFocus={this.handleKeyFocus}
+							value={this.props.data.id}
+							className="EditForm__key-or-id__input"
+							readOnly
+						/>
 					</div>
 				</div>
 			);
@@ -416,11 +448,7 @@ var EditForm = React.createClass({
 	renderNameField () {
 		var nameField = this.props.list.nameField;
 		var nameFieldIsFormHeader = this.props.list.nameFieldIsFormHeader;
-		var wrapNameField = field => (
-			<div className="EditForm__name-field">
-				{field}
-			</div>
-		);
+		var wrapNameField = field => <div className="EditForm__name-field">{field}</div>;
 		if (nameFieldIsFormHeader) {
 			var nameFieldProps = this.getFieldProps(nameField);
 			nameFieldProps.label = null;
@@ -431,13 +459,9 @@ var EditForm = React.createClass({
 				placeholder: nameField.label,
 				size: 'large',
 			};
-			return wrapNameField(
-				React.createElement(Fields[nameField.type], nameFieldProps)
-			);
+			return wrapNameField(React.createElement(Fields[nameField.type], nameFieldProps));
 		} else {
-			return wrapNameField(
-				<h2>{this.props.data.name || '(no name)'}</h2>
-			);
+			return wrapNameField(<h2>{this.props.data.name || '(no name)'}</h2>);
 		}
 	},
 	renderFormElements () {
@@ -450,7 +474,9 @@ var EditForm = React.createClass({
 				this.props.list.nameField
 				&& el.field === this.props.list.nameField.path
 				&& this.props.list.nameFieldIsFormHeader
-			) return;
+			) {
+				return;
+			}
 
 			if (el.type === 'heading') {
 				headings++;
@@ -508,38 +534,40 @@ var EditForm = React.createClass({
 							disabled={loading}
 							loading={loading}
 							onClick={this.updateItem}
-							data-button="update"
-						>
+							data-button="update">
 							{loadingButtonText}
 						</LoadingButton>
 					)}
-					{
-						!this.props.list.noedit && customActions.map(item => (
+					{!this.props.list.noedit &&
+						customActions.map(item => (
 							<LoadingButton
 								color="primary"
 								disabled={loading}
 								loading={loading}
 								onClick={this.handleCustomAction.bind(this, item)}
-								data-button="update"
-							>
+								data-button="update">
 								{item.name}
 							</LoadingButton>
-						))
-					}
+						))}
 					{!this.props.list.noedit && (
-						<Button disabled={loading} onClick={this.toggleResetDialog} variant="link" color="cancel" data-button="reset">
-							<ResponsiveText
-								hiddenXS="reset changes"
-								visibleXS="reset"
-							/>
+						<Button
+							disabled={loading}
+							onClick={this.toggleResetDialog}
+							variant="link"
+							color="cancel"
+							data-button="reset">
+							<ResponsiveText hiddenXS="reset changes" visibleXS="reset" />
 						</Button>
 					)}
 					{!this.props.list.nodelete && (
-						<Button disabled={loading} onClick={this.toggleDeleteDialog} variant="link" color="delete" style={styles.deleteButton} data-button="delete">
-							<ResponsiveText
-								hiddenXS={`delete ${this.props.list.singular.toLowerCase()}`}
-								visibleXS="delete"
-							/>
+						<Button
+							disabled={loading}
+							onClick={this.toggleDeleteDialog}
+							variant="link"
+							color="delete"
+							style={styles.deleteButton}
+							data-button="delete">
+							<ResponsiveText hiddenXS={`delete ${this.props.list.singular.toLowerCase()}`} visibleXS="delete" />
 						</Button>
 					)}
 				</div>
@@ -562,7 +590,9 @@ var EditForm = React.createClass({
 			if (data.createdAt) {
 				elements.push(
 					<FormField key="createdAt" label="Created on">
-						<FormInput noedit title={moment(data.createdAt).format('DD/MM/YYYY h:mm:ssa')}>{moment(data.createdAt).format('Do MMM YYYY')}</FormInput>
+						<FormInput noedit title={moment(data.createdAt).format('DD/MM/YYYY h:mm:ssa')}>
+							{moment(data.createdAt).format('Do MMM YYYY')}
+						</FormInput>
 					</FormField>
 				);
 			}
@@ -575,7 +605,9 @@ var EditForm = React.createClass({
 				if (createdByName) {
 					elements.push(
 						<FormField key="createdBy" label="Created by">
-							<FormInput noedit>{data.createdBy.name.first} {data.createdBy.name.last}</FormInput>
+							<FormInput noedit>
+								{data.createdBy.name.first} {data.createdBy.name.last}
+							</FormInput>
 						</FormField>
 					);
 				}
@@ -587,7 +619,9 @@ var EditForm = React.createClass({
 			if (data.updatedAt && (!data.createdAt || data.createdAt !== data.updatedAt)) {
 				elements.push(
 					<FormField key="updatedAt" label="Updated on">
-						<FormInput noedit title={moment(data.updatedAt).format('DD/MM/YYYY h:mm:ssa')}>{moment(data.updatedAt).format('Do MMM YYYY')}</FormInput>
+						<FormInput noedit title={moment(data.updatedAt).format('DD/MM/YYYY h:mm:ssa')}>
+							{moment(data.updatedAt).format('Do MMM YYYY')}
+						</FormInput>
 					</FormField>
 				);
 			}
@@ -600,7 +634,9 @@ var EditForm = React.createClass({
 				if (updatedByName) {
 					elements.push(
 						<FormField key="updatedBy" label="Updated by">
-							<FormInput noedit>{data.updatedBy.name.first} {data.updatedBy.name.last}</FormInput>
+							<FormInput noedit>
+								{data.updatedBy.name.first} {data.updatedBy.name.last}
+							</FormInput>
 						</FormField>
 					);
 				}
@@ -617,7 +653,7 @@ var EditForm = React.createClass({
 	render () {
 		return (
 			<form ref="editForm" className="EditForm-container">
-				{(this.state.alerts) ? <AlertMessages alerts={this.state.alerts} /> : null}
+				{this.state.alerts ? <AlertMessages alerts={this.state.alerts} /> : null}
 				<Grid.Row>
 					<Grid.Col large="one-whole">
 						<Form layout="horizontal" component="div">
@@ -633,17 +669,17 @@ var EditForm = React.createClass({
 					confirmationLabel="Reset"
 					isOpen={this.state.resetDialogIsOpen}
 					onCancel={this.toggleResetDialog}
-					onConfirmation={this.handleReset}
-				>
-					<p>Reset your changes to <strong>{this.props.data.name}</strong>?</p>
+					onConfirmation={this.handleReset}>
+					<p>
+						Reset your changes to <strong>{this.props.data.name}</strong>?
+					</p>
 				</ConfirmationDialog>
 				{this.renderCustomActionsModal()}
 				<ConfirmationDialog
 					confirmationLabel="Delete"
 					isOpen={this.state.deleteDialogIsOpen}
 					onCancel={this.toggleDeleteDialog}
-					onConfirmation={this.handleDelete}
-				>
+					onConfirmation={this.handleDelete}>
 					Are you sure you want to delete <strong>{this.props.data.name}?</strong>
 					<br />
 					<br />
