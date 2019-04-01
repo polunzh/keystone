@@ -33,7 +33,11 @@ module.exports = function (req, res, next) {
 			error = error.name !== 'Error' ? error.name + ': ' + error.message : error.message;
 		}
 		if (detail instanceof Error) {
-			detail = detail.name !== 'Error' ? detail.name + ': ' + detail.message : detail.message;
+			if (detail.name === 'ValidationError' && detail.errors) {
+				detail = Object.keys(detail.errors).map(x => detail.errors[x].message).join(' ');
+			} else {
+				detail = detail.name !== 'Error' ? detail.name + ': ' + detail.message : detail.message;
+			}
 		}
 		// send error as json
 		var data = typeof error === 'string' || (error && detail)

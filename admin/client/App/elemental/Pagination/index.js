@@ -72,7 +72,7 @@ class Pagination extends Component {
 		const className = css(classes.container, this.props.className);
 		return (
 			<div className={className} style={this.props.style}>
-				{this.renderCount()}
+				{/* {this.renderCount()} */}
 				{this.renderPages()}
 			</div>
 		);
